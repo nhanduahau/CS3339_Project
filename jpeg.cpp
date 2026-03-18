@@ -5,8 +5,16 @@
 #include <thread>
 #include <iostream>
 
+/*
+ * PURPOSE:
+ * This benchmark simulates the core mathematical component of JPEG image
+ * compression by applying the 2D Discrete Cosine Transform (DCT).
+ */
+
 const double PI_VAL = 3.14159265358979323846;
 
+// Calculates the standard 2D Discrete Cosine Transform for an 8x8 block of pixels
+// This maps image intensities into a spectrum of spatial frequencies
 double dct8x8(const double in[8][8], double out[8][8])
 {
     double checksum = 0.0;
@@ -20,12 +28,16 @@ double dct8x8(const double in[8][8], double out[8][8])
             {
                 for (int y = 0; y < 8; ++y)
                 {
+                    // Compute the contribution of spatial location (x,y) to frequency bin (u,v)
+                    // using separable cosine basis functions
                     sum += in[x][y] * std::cos((2 * x + 1) * u * PI_VAL / 16.0) * std::cos((2 * y + 1) * v * PI_VAL / 16.0);
                 }
             }
 
+            // Normalization coefficients: scale by 1/sqrt(2) for DC (0th) components
             double cu = (u == 0) ? (1.0 / std::sqrt(2.0)) : 1.0;
             double cv = (v == 0) ? (1.0 / std::sqrt(2.0)) : 1.0;
+            // Complete orthornormal transformation scaling
             out[u][v] = 0.25 * cu * cv * sum;
             checksum += out[u][v];
         }

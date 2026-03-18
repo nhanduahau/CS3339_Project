@@ -5,12 +5,23 @@
 #include <thread>
 #include <iostream>
 
+/*
+ * PURPOSE:
+ * This benchmark measures the performance of data integrity algorithms
+ * by computing the 32-bit Cyclic Redundancy Check (CRC32).
+ */
+
+// Computes the CRC-32 cyclic redundancy check value for a single byte.
+// It XORs the byte into the CRC, then processes it bit-by-bit.
+// If the lowest bit is 1, the CRC is shifted right and XORed with the standard CRC-32 polynomial (0xEDB88320).
+// Otherwise, it is just shifted right by 1 bit.
 uint32_t crc32_update(uint32_t crc, uint8_t data)
 {
     crc ^= data;
     for (int i = 0; i < 8; ++i)
     {
         if (crc & 1)
+            // 0xEDB88320 is the reversed polynomial for CRC-32 (IEEE 802.3)
             crc = (crc >> 1) ^ 0xEDB88320U;
         else
             crc >>= 1;
@@ -18,6 +29,8 @@ uint32_t crc32_update(uint32_t crc, uint8_t data)
     return crc;
 }
 
+// Processes an entire buffer of bytes sequentially to produce a final CRC-32 checksum.
+// The initial CRC state is 0xFFFFFFFF, and the final result is inverted (~crc).
 uint32_t crc32_buf(const std::vector<uint8_t> &buf)
 {
     uint32_t crc = 0xFFFFFFFFU;

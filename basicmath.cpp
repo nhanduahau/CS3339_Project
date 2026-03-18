@@ -4,10 +4,19 @@
 #include <thread>
 #include <iostream>
 
+/*
+ * PURPOSE:
+ * This benchmark tests the CPU's floating-point unit (FPU) by performing
+ * basic mathematical operations like sin, cos, sqrt, etc.
+ */
+
 double worker_basicmath(int tid, int threads, long long iterations)
 {
+    // Divide the total iterations into relatively equal chunks for each thread
     long long chunk = iterations / threads;
+    // Calculate the start index for this thread's chunk
     long long start = tid * chunk;
+    // The last thread takes any remaining iterations to avoid dropping work due to integer division
     long long end = (tid == threads - 1) ? iterations : start + chunk;
 
     if (threads == 1)
@@ -16,10 +25,14 @@ double worker_basicmath(int tid, int threads, long long iterations)
     double sum = 0.0;
     for (long long i = start; i < end; ++i)
     {
+        // Generate an arbitrary starting point 'x' based on 'i' to introduce variation
         double x = (i % 10000) * 0.0001 + 1.0;
         for (int k = 0; k < 100; ++k)
         {
+            // Compute a mix of transcendental functions (sine, cosine, square root, natural logarithm, hyperbolic tangent)
+            // This is primarily to tax the floating-point functional units continuously
             sum += std::sin(x) * std::cos(x) + std::sqrt(x) + std::log(x) + std::tanh(x);
+            // Slightly increment 'x' to ensure the result is not optimized out or easily predictable
             x += 0.000001;
         }
     }

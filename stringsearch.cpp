@@ -5,6 +5,12 @@
 #include <thread>
 #include <iostream>
 
+/*
+ * PURPOSE:
+ * This benchmark tests string manipulation and cache performance
+ * by repeatedly searching for sub-strings within a large text buffer.
+ */
+
 long long worker_stringsearch(int tid, int textSizeMB, int repeats, int threads)
 {
     if (threads == 1)
@@ -13,9 +19,11 @@ long long worker_stringsearch(int tid, int textSizeMB, int repeats, int threads)
     std::mt19937 rng(2024 + tid);
     std::uniform_int_distribution<int> dist(0, 25);
 
+    // Calculate the target buffer size in total bytes (megabytes to bytes)
     size_t n = (size_t)textSizeMB * 1024 * 1024;
     std::string text(n, 'a');
     for (size_t i = 0; i < n; ++i)
+        // Fill the search text with random lower-case ASCII alphabet letters
         text[i] = char('a' + dist(rng));
 
     std::vector<std::string> patterns = {

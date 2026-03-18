@@ -7,27 +7,42 @@
 #include <iostream>
 #include <functional>
 
+/*
+ * PURPOSE:
+ * This benchmark tests memory access patterns and priority queue performance
+ * by calculating the shortest paths in a graph using Dijkstra's algorithm.
+ */
+
 using pii = std::pair<int, int>;
 
+// Run Dijkstra's shortest path algorithm from a given source node to all other nodes.
+// It computes the minimum distance using a priority queue.
 uint64_t run_dijkstra_graph(const std::vector<std::vector<pii>> &graph, int src)
 {
     const int INF = 1e9;
     int n = (int)graph.size();
+    // Initialize all distances to infinity
     std::vector<int> dist(n, INF);
+    // Min-heap priority queue to always process the closest node next
     std::priority_queue<pii, std::vector<pii>, std::greater<pii>> pq;
 
     dist[src] = 0;
+    // Push the source node with a distance of 0
     pq.push({0, src});
 
     while (!pq.empty())
     {
+        // Extract the node with the minimum distance
         auto [d, u] = pq.top();
         pq.pop();
+        // If we found a shorter path previously, skip processing
         if (d != dist[u])
             continue;
 
+        // Iterate over all adjacent edges of the current node u
         for (auto [v, w] : graph[u])
         {
+            // Relaxation: update path if passing through u is shorter
             if (dist[v] > d + w)
             {
                 dist[v] = d + w;
@@ -37,6 +52,7 @@ uint64_t run_dijkstra_graph(const std::vector<std::vector<pii>> &graph, int src)
     }
 
     uint64_t checksum = 0;
+    // Calculate a simple checksum consisting of the sum of shortest distances
     for (int x : dist)
         checksum += (uint64_t)x;
     return checksum;

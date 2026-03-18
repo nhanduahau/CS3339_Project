@@ -6,15 +6,25 @@
 #include <thread>
 #include <iostream>
 
+/*
+ * PURPOSE:
+ * This benchmark measures the computation of the Fast Fourier Transform (FFT)
+ * which tests complex number arithmetic and data manipulation.
+ */
+
 const double PI_VAL = 3.14159265358979323846;
 
+// Perform a Fast Fourier Transform using the iterative Radix-2 Cooley-Tukey algorithm
 void fft(std::vector<std::complex<double>> &a)
 {
     int n = (int)a.size();
 
+    // Reorder the elements using bit-reversal permutation
+    // This allows the actual FFT stages to be computed purely iteratively
     for (int i = 1, j = 0; i < n; ++i)
     {
         int bit = n >> 1;
+        // Calculate the reversed bits of the index via bitwise shifts and XORs
         for (; j & bit; bit >>= 1)
             j ^= bit;
         j ^= bit;
@@ -22,8 +32,10 @@ void fft(std::vector<std::complex<double>> &a)
             std::swap(a[i], a[j]);
     }
 
+    // Iterate over each stage of the FFT, processing progressively larger paired chunks
     for (int len = 2; len <= n; len <<= 1)
     {
+        // Calculate the base complex angle for the current stage size
         double ang = -2 * PI_VAL / len;
         std::complex<double> wlen(std::cos(ang), std::sin(ang));
 
@@ -32,10 +44,13 @@ void fft(std::vector<std::complex<double>> &a)
             std::complex<double> w(1);
             for (int j = 0; j < len / 2; ++j)
             {
+                // Execute the continuous butterfly operation core calculation
+                // Multiply by the twiddle factor (w) and mix pairs
                 std::complex<double> u = a[i + j];
                 std::complex<double> v = a[i + j + len / 2] * w;
                 a[i + j] = u + v;
                 a[i + j + len / 2] = u - v;
+                // Accumulate the phase rotation for the next pair
                 w *= wlen;
             }
         }
