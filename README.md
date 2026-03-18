@@ -1,6 +1,10 @@
 # CPU Benchmark Suite
 
-**Author**: Ly Huu Nhan To (Harry)
+**Author**:
+
+- Ly Huu Nhan To (Harry)
+- Jordan Hunt
+- Connor Dinh
 
 ## Introduction
 
