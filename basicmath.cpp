@@ -1,91 +1,79 @@
-#include <iostream>
+#include "benchmark_common.hpp"
+#include <cmath>
 #include <vector>
 #include <thread>
-#include <chrono>
-#include <cmath>
-#include <iomanip>
-#ifdef _WIN32
-#include <windows.h>
-#endif
+#include <iostream>
 
-using namespace std;
-
-double worker(int tid, int threads, long long iterations)
+double worker_basicmath(int tid, int threads, long long iterations)
 {
-#ifdef _WIN32
-    if (threads == 1)
-    {
-        SetThreadAffinityMask(GetCurrentThread(), 1ULL);
-    }
-#endif
-
     long long chunk = iterations / threads;
     long long start = tid * chunk;
     long long end = (tid == threads - 1) ? iterations : start + chunk;
+
+    if (threads == 1)
+        pin_current_thread_to_core0();
 
     double sum = 0.0;
     for (long long i = start; i < end; ++i)
     {
         double x = (i % 10000) * 0.0001 + 1.0;
-        double local = 1.0;
-        for (int k = 0; k < 50; ++k)
+        for (int k = 0; k < 100; ++k)
         {
-            double a = sin(x) * cos(x) + sqrt(x) + log(x) + tanh(x);
-            double b = exp(-x * 0.1) + atan(x) + cbrt(x + 0.5);
-            local = local * 0.999999 + a * b;
-            sum += a + b + local / (k + 1.0);
+            sum += std::sin(x) * std::cos(x) + std::sqrt(x) + std::log(x) + std::tanh(x);
             x += 0.000001;
         }
     }
     return sum;
 }
 
-int main()
+double run_basicmath_once(int threads)
 {
-    int mode;
-    cout << "basicmath benchmark\n";
-    cout << "Enter mode (1=single, 2=multi): ";
-    cin >> mode;
+    const long long iterations = 50'000'000LL;
 
-    int threads = (mode == 2) ? (int)thread::hardware_concurrency() : 1;
-    if (threads <= 0)
-        threads = 1;
+    std::vector<std::thread> pool;
+    std::vector<double> partial(threads, 0.0);
 
-    const long long iterations = 40'000'000LL;
-    const int runs = 5;
-    double totalElapsedSeconds = 0.0;
-
-    cout << fixed << setprecision(6);
-    cout << "Threads used: " << threads << "\n";
-
-    for (int run = 1; run <= runs; ++run)
+    for (int i = 0; i < threads; ++i)
     {
-        vector<thread> pool;
-        vector<double> partial(threads, 0.0);
-
-        auto t1 = chrono::high_resolution_clock::now();
-
-        for (int i = 0; i < threads; ++i)
-        {
-            pool.emplace_back([&, i]()
-                              { partial[i] = worker(i, threads, iterations); });
-        }
-
-        for (auto &th : pool)
-            th.join();
-
-        auto t2 = chrono::high_resolution_clock::now();
-        double total = 0.0;
-        for (double v : partial)
-            total += v;
-
-        chrono::duration<double> elapsed = t2 - t1;
-        totalElapsedSeconds += elapsed.count();
-
-        cout << "Run " << run << " checksum: " << total << "\n";
-        cout << "Run " << run << " elapsed: " << elapsed.count() << " seconds\n";
+        pool.emplace_back([&, i]()
+                          { partial[i] = worker_basicmath(i, threads, iterations); });
     }
 
-    cout << "Average elapsed (5 runs): " << (totalElapsedSeconds / runs) << " seconds\n";
+    for (auto &th : pool)
+        th.join();
+
+    double total = 0.0;
+    for (double v : partial)
+        total += v;
+    return total;
+}
+
+int main(int argc, char *argv[])
+{
+    BenchmarkConfig cfg;
+    try
+    {
+        cfg = parse_config_from_argv(argc, argv);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return 1;
+    }
+
+    std::vector<double> times;
+    double checksum = 0.0;
+
+    for (int r = 0; r < cfg.runs; ++r)
+    {
+        double current = 0.0;
+        double elapsed = measure_once([&]()
+                                      { current = run_basicmath_once(cfg.threads); });
+
+        times.push_back(elapsed);
+        checksum = current;
+    }
+
+    print_summary("basicmath", cfg, times, checksum);
     return 0;
 }
