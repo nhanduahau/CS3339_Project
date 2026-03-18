@@ -4,5 +4,6 @@
 #unignore what we want to track
 !*.cpp
 !*.h
+!*.hpp
 !.gitignore
 !README.md
