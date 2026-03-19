@@ -116,18 +116,29 @@ g++ -O3 -march=native -o stringsearch stringsearch.cpp
 
 ### Running the Benchmarks
 
-Once compiled, you can run the generated executable from your terminal or command prompt.
+Once compiled, you must pass **2 parameters** when running the executable: `<mode>` and `<runs>`.
+
+- **`<mode>`**: `1` for Single-Core (pinned to core 0), `2` for Multi-Core (uses maximum hardware threads).
+- **`<runs>`**: The number of iterations to run the benchmark (an integer from `1` to `10`).
 
 **On Linux / macOS:**
 
 ```bash
-./basicmath
+# Example: Run in single-core mode with 3 iterations
+./basicmath 1 3
+
+# Example: Run in multi-core mode with 5 iterations
+./basicmath 2 5
 ```
 
 **On Windows (PowerShell or CMD):**
 
 ```powershell
-.\basicmath.exe
+# Example: Run in single-core mode with 3 iterations
+.\basicmath.exe 1 3
+
+# Example: Run in multi-core mode with 5 iterations
+.\basicmath.exe 2 5
 ```
 
 ### Automation & Scripting (Optional)
