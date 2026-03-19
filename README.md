@@ -84,7 +84,28 @@ To compile and run these benchmarks, you will need a modern C++ compiler such as
 
 As stated in our methodology, all benchmarks must be compiled with the same optimization flags to ensure fair comparisons. Below is an example using `g++` (GCC) with standard optimization flags (`-O3` for maximum performance, and `-march=native` to allow the compiler to use the host CPU's specific instruction sets like SIMD).
 
-#### Compiling the Benchmarks (Linux/macOS/Windows MinGW)
+#### Automation & Scripting Compilation (Recommended)
+
+You can use the provided Python script compile_all.py to automatically compile all the benchmark .cpp files in the directory without having to run commands one by one.
+
+**Requirements**:
+- Python 3.x
+- g++ (GCC) compiler installed and accessible via command line.
+
+**Usage**:
+Open a terminal in the project directory and run:
+
+1. **Compile all files (skipping ones that are already compiled)**:
+`powershell
+python compile_all.py
+`
+
+2. **Force recompilation (removes all existing .exe files and compiles everything from scratch)**:
+`powershell
+python compile_all.py --recompile
+`
+
+#### Manual Compilation (Linux/macOS/Windows MinGW)
 
 Below are the `g++` commands to compile each benchmark. We use `-O3` and `-march=native` to maximize performance. Benchmarks utilizing multiple threads may require `-pthread`.
 
