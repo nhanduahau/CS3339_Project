@@ -55,8 +55,8 @@ uint64_t worker_qsort(int tid, int arraysPerThread, int arrSize, int threads)
 
 uint64_t run_qsort_once(int threads)
 {
-    const int totalArrays = 32; // Total number of arrays to sort across all threads
-    const int arrSize = 20'000'000; // Size of each array (20 million integers)
+    const int totalArrays = 16; // Total number of arrays to sort across all threads
+    const int arrSize = 10'000'000; // Size of each array (10 million integers)
 
     std::vector<std::thread> pool;
     std::vector<uint64_t> partial(threads, 0);
