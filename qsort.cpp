@@ -55,16 +55,22 @@ uint64_t worker_qsort(int tid, int arraysPerThread, int arrSize, int threads)
 
 uint64_t run_qsort_once(int threads)
 {
-    const int arraysPerThread = 8;
-    const int arrSize = 10'000'000;
+    const int totalArrays = 32; // Total number of arrays to sort across all threads
+    const int arrSize = 20'000'000; // Size of each array (20 million integers)
 
     std::vector<std::thread> pool;
     std::vector<uint64_t> partial(threads, 0);
 
+    const int baseArrays = totalArrays / threads;
+    const int extraArrays = totalArrays % threads;
+
     for (int i = 0; i < threads; ++i)
     {
-        pool.emplace_back([&, i]()
-                          { partial[i] = worker_qsort(i, arraysPerThread, arrSize, threads); });
+        int myArrays = baseArrays + (i < extraArrays ? 1 : 0);
+        pool.emplace_back([&, i, myArrays]()
+        {
+            partial[i] = worker_qsort(i, myArrays, arrSize, threads);
+        });
     }
 
     for (auto &th : pool)
