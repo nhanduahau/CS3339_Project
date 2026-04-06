@@ -57,12 +57,11 @@ void fft(std::vector<std::complex<double>> &a)
     }
 }
 
-double worker_fft(int tid, int repeats, int n, int threads)
+double worker_fft(int tid, int repeatStart, int repeats, int n, int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
 
-    std::mt19937 rng(900 + tid);
     std::uniform_real_distribution<double> dist(-1.0, 1.0);
 
     double checksum = 0.0;
@@ -70,6 +69,11 @@ double worker_fft(int tid, int repeats, int n, int threads)
 
     for (int r = 0; r < repeats; ++r)
     {
+        // Seed by global repeat index so single-thread and multi-thread modes
+        // generate the same logical input set.
+        int repeatIndex = repeatStart + r;
+        std::mt19937 rng(900 + repeatIndex);
+
         for (int i = 0; i < n; ++i)
         {
             data[i] = std::complex<double>(dist(rng), dist(rng));
@@ -96,13 +100,17 @@ double run_fft_once(int threads)
 
     const int baseRepeats = totalRepeats / threads;
     const int extraRepeats = totalRepeats % threads;
+    int nextRepeatStart = 0;
 
     for (int i = 0; i < threads; ++i)
     {
         int myRepeats = baseRepeats + (i < extraRepeats ? 1 : 0);
-        pool.emplace_back([&, i, myRepeats]()
+        int myRepeatStart = nextRepeatStart;
+        nextRepeatStart += myRepeats;
+
+        pool.emplace_back([&, i, myRepeatStart, myRepeats]()
         {
-            partial[i] = worker_fft(i, myRepeats, n, threads);
+            partial[i] = worker_fft(i, myRepeatStart, myRepeats, n, threads);
         });
     }
 
