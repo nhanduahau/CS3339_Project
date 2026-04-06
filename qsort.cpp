@@ -12,17 +12,19 @@
  * by running repeated std::sort passes on arrays of integer values.
  */
 
-uint64_t worker_qsort(int tid, int arraysPerThread, int arrSize, int threads)
+uint64_t worker_qsort(int beginArrayIdx, int endArrayIdx, int arrSize, int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
 
-    std::mt19937_64 rng(123456789ULL + tid * 99991ULL);
     uint64_t checksum = 0;
     std::vector<int> arr(arrSize);
 
-    for (int r = 0; r < arraysPerThread; ++r)
+    for (int arrayIdx = beginArrayIdx; arrayIdx < endArrayIdx; ++arrayIdx)
     {
+        // Seed by global array index so all modes process the same logical array set.
+        std::mt19937_64 rng(123456789ULL + (uint64_t)arrayIdx * 99991ULL);
+
         for (int i = 0; i < arrSize; ++i)
         {
             arr[i] = (int)(rng() % 1'000'000'000ULL);
@@ -36,7 +38,7 @@ uint64_t worker_qsort(int tid, int arraysPerThread, int arrSize, int threads)
         std::reverse(arr.begin(), arr.end());
         std::sort(arr.begin(), arr.end());
 
-        // Phase 3: deterministic remap then sort once more.
+        // Phase 3: deterministic remap of current array contents, then sort once more.
         for (int i = 0; i < arrSize; ++i)
         {
             // Scramble data pseudo-randomly using a multiplicative hash (golden ratio sequence).
@@ -63,13 +65,18 @@ uint64_t run_qsort_once(int threads)
 
     const int baseArrays = totalArrays / threads;
     const int extraArrays = totalArrays % threads;
+    int startArrayIdx = 0;
 
     for (int i = 0; i < threads; ++i)
     {
-        int myArrays = baseArrays + (i < extraArrays ? 1 : 0);
-        pool.emplace_back([&, i, myArrays]()
+        int cnt = baseArrays + (i < extraArrays ? 1 : 0);
+        int beginArrayIdx = startArrayIdx;
+        int endArrayIdx = beginArrayIdx + cnt;
+        startArrayIdx = endArrayIdx;
+
+        pool.emplace_back([&, i, beginArrayIdx, endArrayIdx]()
         {
-            partial[i] = worker_qsort(i, myArrays, arrSize, threads);
+            partial[i] = worker_qsort(beginArrayIdx, endArrayIdx, arrSize, threads);
         });
     }
 
