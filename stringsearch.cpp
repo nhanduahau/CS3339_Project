@@ -50,16 +50,22 @@ long long worker_stringsearch(int tid, int textSizeMB, int repeats, int threads)
 
 long long run_stringsearch_once(int threads)
 {
-    const int textSizeMB = 64;
-    const int repeats = 10;
+    const int totalTextMB = 512; // Total text size in megabytes
+    const int totalRepeats = 50;  // Number of times to repeat the search patterns
 
     std::vector<std::thread> pool;
     std::vector<long long> partial(threads, 0);
 
+    const int baseTextMB = totalTextMB / threads;
+    const int extraTextMB = totalTextMB % threads;
+
     for (int i = 0; i < threads; ++i)
     {
-        pool.emplace_back([&, i]()
-                          { partial[i] = worker_stringsearch(i, textSizeMB, repeats, threads); });
+        int myTextMB = baseTextMB + (i < extraTextMB ? 1 : 0);
+        pool.emplace_back([&, i, myTextMB]()
+        {
+            partial[i] = worker_stringsearch(i, myTextMB, totalRepeats, threads);
+        });
     }
 
     for (auto &th : pool)
