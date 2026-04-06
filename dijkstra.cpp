@@ -58,32 +58,20 @@ uint64_t run_dijkstra_graph(const std::vector<std::vector<pii>> &graph, int src)
     return checksum;
 }
 
-uint64_t worker_dijkstra(int tid, int repeats, int nodes, int edgesPerNode, int threads)
+uint64_t worker_dijkstra(int tid,
+                         const std::vector<std::vector<pii>> &graph,
+                         const std::vector<int> &sources,
+                         int beginIdx,
+                         int endIdx,
+                         int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
 
-    std::mt19937 rng(1000 + tid);
-    std::uniform_int_distribution<int> nodeDist(0, nodes - 1);
-    std::uniform_int_distribution<int> weightDist(1, 100);
-
-    std::vector<std::vector<pii>> graph(nodes);
-
-    for (int u = 0; u < nodes; ++u)
-    {
-        for (int e = 0; e < edgesPerNode; ++e)
-        {
-            int v = nodeDist(rng);
-            int w = weightDist(rng);
-            if (v != u)
-                graph[u].push_back({v, w});
-        }
-    }
-
     uint64_t total = 0;
-    for (int r = 0; r < repeats; ++r)
+    for (int i = beginIdx; i < endIdx; ++i)
     {
-        total ^= run_dijkstra_graph(graph, rng() % nodes);
+        total ^= run_dijkstra_graph(graph, sources[i]);
     }
 
     return total;
@@ -91,17 +79,51 @@ uint64_t worker_dijkstra(int tid, int repeats, int nodes, int edgesPerNode, int 
 
 uint64_t run_dijkstra_once(int threads)
 {
-    const int nodes = 100000;
-    const int edgesPerNode = 100;
-    const int repeats = 40;
+    const int nodes = 100000; // Total number of nodes in the graph (100,000 nodes)
+    const int edgesPerNode = 1000;  // Each node has 1000 outgoing edges on average (1 billion edges total)
+    const int totalQueries = 500; // Total number of source nodes to run Dijkstra's algorithm from (500 queries = 5 million node visits)
+
+    // Build a random graph with the specified number of nodes and edges per node
+    std::mt19937 build_rng(1000);
+    std::uniform_int_distribution<int> nodeDist(0, nodes - 1);
+    std::uniform_int_distribution<int> weightDist(1, 100);
+
+    std::vector<std::vector<pii>> graph(nodes);
+    for (int u = 0; u < nodes; ++u)
+    {
+        for (int e = 0; e < edgesPerNode; ++e)
+        {
+            int v = nodeDist(build_rng);
+            int w = weightDist(build_rng);
+            if (v != u)
+                graph[u].push_back({v, w});
+        }
+    }
+
+    // Generate random source nodes for the Dijkstra's algorithm queries
+    std::mt19937 src_rng(2000);
+    std::vector<int> sources(totalQueries);
+    for (int i = 0; i < totalQueries; ++i)
+        sources[i] = src_rng() % nodes;
 
     std::vector<std::thread> pool;
     std::vector<uint64_t> partial(threads, 0);
 
+    int base = totalQueries / threads;
+    int extra = totalQueries % threads;
+
+    int start = 0;
     for (int i = 0; i < threads; ++i)
     {
-        pool.emplace_back([&, i]()
-                          { partial[i] = worker_dijkstra(i, repeats, nodes, edgesPerNode, threads); });
+        int cnt = base + (i < extra ? 1 : 0);
+        int beginIdx = start;
+        int endIdx = beginIdx + cnt;
+        start = endIdx;
+
+        pool.emplace_back([&, i, beginIdx, endIdx]()
+        {
+            partial[i] = worker_dijkstra(i, graph, sources, beginIdx, endIdx, threads);
+        });
     }
 
     for (auto &th : pool)
