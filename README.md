@@ -26,7 +26,7 @@ The suite is designed to measure:
 - In single-core mode, the active thread is pinned to core 0.
 - In multi-core mode, all hardware threads are used.
 - Checksums are intended as sanity guards and dead-code-elimination guards.
-- Benchmarks are partitioned by global work index so mode 1 and mode 2 run equivalent logical inputs and total work.
+- Benchmarks are partitioned by global work index, with deterministic per-index input generation, so mode 1 and mode 2 run equivalent logical inputs and total work.
 - Floating-point benchmarks can still show tiny checksum deltas due to different accumulation order across threads.
 - Use the same compiler and optimization flags across systems for fair comparison.
 
@@ -115,7 +115,7 @@ Each executable takes two arguments:
 - mode: 1 for single-core pinned mode, 2 for multi-core mode
 - runs: integer from 1 to 10
 
-Examples:
+Examples on Linux:
 
 ```bash
 ./basicmath.exe 1 3
