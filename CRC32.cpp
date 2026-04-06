@@ -68,8 +68,8 @@ uint32_t worker_crc32(int tid,
 
 uint32_t run_crc32_once(int threads)
 {
-    const int blockSize = 1024 * 1024 * 1024;
-    const int totalBlocks = 12;   // Total data size is 12 GB (12 blocks * 1 GB each)
+    const int blockSize = 512 * 1024 * 1024;
+    const int totalBlocks = 12;   // Total data size is blockSize * totalBlocks = 6 GB
     std::vector<std::thread> pool;
     std::vector<uint32_t> partial(threads, 0);
 
