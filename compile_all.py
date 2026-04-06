@@ -5,7 +5,7 @@ import glob
 import sys
 
 def build_compile_cmd(src, exe_name):
-    compile_cmd = ["g++", "-std=c++17", "-O3", "-march=native"]
+    compile_cmd = ["g++", "-std=c++17", "-O3"]
     if os.name != "nt":
         compile_cmd.append("-pthread")
     compile_cmd.extend(["-o", exe_name, src])
