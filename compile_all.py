@@ -4,14 +4,20 @@ import subprocess
 import glob
 import sys
 
+def build_compile_cmd(src, exe_name):
+    compile_cmd = ["g++", "-std=c++17", "-O3", "-march=native"]
+    if os.name != "nt":
+        compile_cmd.append("-pthread")
+    compile_cmd.extend(["-o", exe_name, src])
+    return compile_cmd
+
 def compile_benchmarks(source_files):
     print("=== Checking and compiling C++ files ===")
     for src in source_files:
         exe_name = os.path.splitext(src)[0] + ".exe"
         if not os.path.exists(exe_name):
             print(f"Compiling {src} -> {exe_name}...")
-            # Use g++ with C++17 standard and -O3 optimization
-            compile_cmd = ["g++", "-std=c++17", "-O3", src, "-o", exe_name]
+            compile_cmd = build_compile_cmd(src, exe_name)
             result = subprocess.run(compile_cmd)
             if result.returncode != 0:
                 print(f"Error compiling {src}. Exiting.")
@@ -30,7 +36,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Find all .cpp files in the current directory
-    cpp_files = glob.glob("*.cpp")
+    cpp_files = sorted(glob.glob("*.cpp"))
     
     if not cpp_files:
         print("No .cpp files found in the current directory.")
