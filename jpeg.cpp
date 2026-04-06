@@ -46,19 +46,21 @@ double dct8x8(const double in[8][8], double out[8][8])
     return checksum;
 }
 
-double worker_jpeg(int tid, int blocks, int threads)
+double worker_jpeg(int beginBlock, int endBlock, int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
 
-    std::mt19937 rng(500 + tid);
     std::uniform_real_distribution<double> dist(0.0, 255.0);
 
     double total = 0.0;
     double in[8][8], out[8][8];
 
-    for (int b = 0; b < blocks; ++b)
+    for (int blockIdx = beginBlock; blockIdx < endBlock; ++blockIdx)
     {
+        // Seed by global block index so all modes process the same logical block set.
+        std::mt19937 rng(500 + blockIdx * 17);
+
         for (int i = 0; i < 8; ++i)
         {
             for (int j = 0; j < 8; ++j)
@@ -89,13 +91,18 @@ double run_jpeg_once(int threads)
 
     const int baseBlocks = totalBlocks / threads;
     const int extraBlocks = totalBlocks % threads;
+    int startBlock = 0;
 
     for (int i = 0; i < threads; ++i)
     {
-        int myBlocks = baseBlocks + (i < extraBlocks ? 1 : 0);
-        pool.emplace_back([&, i, myBlocks]()
+        int cnt = baseBlocks + (i < extraBlocks ? 1 : 0);
+        int beginBlock = startBlock;
+        int endBlock = beginBlock + cnt;
+        startBlock = endBlock;
+
+        pool.emplace_back([&, i, beginBlock, endBlock]()
         {
-            partial[i] = worker_jpeg(i, myBlocks, threads);
+            partial[i] = worker_jpeg(beginBlock, endBlock, threads);
         });
     }
 
