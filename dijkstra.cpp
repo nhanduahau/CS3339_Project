@@ -81,7 +81,7 @@ uint64_t run_dijkstra_once(int threads)
 {
     const int nodes = 100000; // Total number of nodes in the graph (100,000 nodes)
     const int edgesPerNode = 1000;  // Each node has 1000 outgoing edges on average (1 billion edges total)
-    const int totalQueries = 500; // Total number of source nodes to run Dijkstra's algorithm from (500 queries = 5 million node visits)
+    const int totalQueries = 500; // Total number of source nodes used for repeated Dijkstra runs
 
     // Build a random graph with the specified number of nodes and edges per node
     std::mt19937 build_rng(1000);
