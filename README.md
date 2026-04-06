@@ -25,6 +25,9 @@ The suite is designed to measure:
 - Every benchmark accepts the same runtime interface: mode and runs.
 - In single-core mode, the active thread is pinned to core 0.
 - In multi-core mode, all hardware threads are used.
+- Checksums are intended as sanity guards and dead-code-elimination guards.
+- Benchmarks are partitioned by global work index so mode 1 and mode 2 run equivalent logical inputs and total work.
+- Floating-point benchmarks can still show tiny checksum deltas due to different accumulation order across threads.
 - Use the same compiler and optimization flags across systems for fair comparison.
 
 ## Included Benchmarks
@@ -84,7 +87,7 @@ The script compiles every .cpp file in the folder and creates .exe output names.
 python compile_all.py
 ```
 
-Force a clean rebuild:
+Compatibility flag (full rebuild is already default behavior):
 
 ```bash
 python compile_all.py --recompile
@@ -92,17 +95,17 @@ python compile_all.py --recompile
 
 ### Option B: Manual Build (Linux, macOS, MinGW)
 
-Use consistent optimization flags. Since all benchmarks use std::thread, include -pthread for g++/clang++ on POSIX systems.
+Use the same flags as compile_all.py: -std=c++17 -O3, plus -pthread on POSIX systems.
 
 ```bash
-g++ -std=c++17 -O3 -march=native -pthread -o basicmath.exe basicmath.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o bitcount.exe bitcount.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o CRC32.exe CRC32.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o dijkstra.exe dijkstra.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o FFT.exe FFT.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o jpeg.exe jpeg.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o qsort.exe qsort.cpp
-g++ -std=c++17 -O3 -march=native -pthread -o stringsearch.exe stringsearch.cpp
+g++ -std=c++17 -O3 -pthread -o basicmath.exe basicmath.cpp
+g++ -std=c++17 -O3 -pthread -o bitcount.exe bitcount.cpp
+g++ -std=c++17 -O3 -pthread -o CRC32.exe CRC32.cpp
+g++ -std=c++17 -O3 -pthread -o dijkstra.exe dijkstra.cpp
+g++ -std=c++17 -O3 -pthread -o FFT.exe FFT.cpp
+g++ -std=c++17 -O3 -pthread -o jpeg.exe jpeg.cpp
+g++ -std=c++17 -O3 -pthread -o qsort.exe qsort.cpp
+g++ -std=c++17 -O3 -pthread -o stringsearch.exe stringsearch.cpp
 ```
 
 ## Run
@@ -135,4 +138,4 @@ Each benchmark prints:
 - Mean elapsed time
 - Final checksum/result value
 
-The checksum is a correctness guard to reduce the chance of dead-code elimination and to verify deterministic workload behavior.
+The checksum is a correctness guard to reduce the chance of dead-code elimination and to detect accidental workload changes.
