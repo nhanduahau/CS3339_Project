@@ -11,24 +11,13 @@
  * by repeatedly searching for sub-strings within a large text buffer.
  */
 
-long long worker_stringsearch(int tid, int textSizeMB, int repeats, int threads)
+long long worker_stringsearch(const std::string &text,
+                              const std::vector<std::string> &patterns,
+                              int repeats,
+                              int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
-
-    std::mt19937 rng(2024 + tid);
-    std::uniform_int_distribution<int> dist(0, 25);
-
-    // Calculate the target buffer size in total bytes (megabytes to bytes)
-    size_t n = (size_t)textSizeMB * 1024 * 1024;
-    std::string text(n, 'a');
-    for (size_t i = 0; i < n; ++i)
-        // Fill the search text with random lower-case ASCII alphabet letters
-        text[i] = char('a' + dist(rng));
-
-    std::vector<std::string> patterns = {
-        "abc", "hello", "world", "performance", "thread",
-        "cache", "benchmark", "search", "random", "zzzz"};
 
     long long found = 0;
 
@@ -50,21 +39,32 @@ long long worker_stringsearch(int tid, int textSizeMB, int repeats, int threads)
 
 long long run_stringsearch_once(int threads)
 {
-    const int totalTextMB = 256; // Total text size in megabytes
-    const int totalRepeats = 30;  // Number of times to repeat the search patterns
+    const size_t totalTextBytes = 256ULL * 1024ULL * 1024ULL; // Total text size is 256 MB
+    const int totalRepeats = 30; // Number of times to repeat the search patterns
+
+    // Generate one global text buffer so every mode sees the same logical input data.
+    std::mt19937 rng(2024);
+    std::uniform_int_distribution<int> dist(0, 25);
+    std::string text(totalTextBytes, 'a');
+    for (size_t i = 0; i < totalTextBytes; ++i)
+        text[i] = char('a' + dist(rng));
+
+    const std::vector<std::string> patterns = {
+        "abc", "hello", "world", "performance", "thread",
+        "cache", "benchmark", "search", "random", "zzzz"};
 
     std::vector<std::thread> pool;
     std::vector<long long> partial(threads, 0);
 
-    const int baseTextMB = totalTextMB / threads;
-    const int extraTextMB = totalTextMB % threads;
+    const int baseRepeats = totalRepeats / threads;
+    const int extraRepeats = totalRepeats % threads;
 
     for (int i = 0; i < threads; ++i)
     {
-        int myTextMB = baseTextMB + (i < extraTextMB ? 1 : 0);
-        pool.emplace_back([&, i, myTextMB]()
+        int myRepeats = baseRepeats + (i < extraRepeats ? 1 : 0);
+        pool.emplace_back([&, i, myRepeats]()
         {
-            partial[i] = worker_stringsearch(i, myTextMB, totalRepeats, threads);
+            partial[i] = worker_stringsearch(text, patterns, myRepeats, threads);
         });
     }
 
