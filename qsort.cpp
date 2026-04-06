@@ -9,7 +9,7 @@
 /*
  * PURPOSE:
  * This benchmark tests sorting performance and branch prediction
- * by running the QuickSort algorithm on arrays of integer values.
+ * by running repeated std::sort passes on arrays of integer values.
  */
 
 uint64_t worker_qsort(int tid, int arraysPerThread, int arrSize, int threads)
