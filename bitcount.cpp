@@ -70,7 +70,7 @@ uint64_t worker_bitcount(int tid, int threads, long long iterations)
 }
 uint64_t run_bitcount_once(int threads)
 {
-    const long long iterations = 2'000'000'000LL;
+    const long long iterations = 200'000'000LL;
 
     std::vector<std::thread> pool;
     std::vector<uint64_t> partial(threads, 0);
