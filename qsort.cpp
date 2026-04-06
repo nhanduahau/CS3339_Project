@@ -34,7 +34,7 @@ uint64_t worker_qsort(int beginArrayIdx, int endArrayIdx, int arrSize, int threa
         std::sort(arr.begin(), arr.end());
 
         // Phase 2: reverse and sort again to add extra sorting work.
-        // This exercises the sorting routine's worst-case or reversed data detection.
+        // This changes data order and stresses branch/data-dependent behavior.
         std::reverse(arr.begin(), arr.end());
         std::sort(arr.begin(), arr.end());
 
