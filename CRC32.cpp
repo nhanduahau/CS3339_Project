@@ -53,7 +53,7 @@ uint32_t worker_crc32(int tid,
 
     for (int blockIdx = beginBlock; blockIdx < endBlock; ++blockIdx)
     {
-        // Generate pseudo-random data for the block using a thread-specific seed.
+        // Generate pseudo-random data for the block using a deterministic block-specific seed.
         std::mt19937 rng(12345 + blockIdx * 17);
         std::uniform_int_distribution<int> dist(0, 255);
 
@@ -69,7 +69,7 @@ uint32_t worker_crc32(int tid,
 uint32_t run_crc32_once(int threads)
 {
     const int blockSize = 1024 * 1024 * 1024;
-    const int totalBlocks = 12;   // Total data size is 6 GB (12 blocks * 1 GB each)
+    const int totalBlocks = 12;   // Total data size is 12 GB (12 blocks * 1 GB each)
     std::vector<std::thread> pool;
     std::vector<uint32_t> partial(threads, 0);
 
