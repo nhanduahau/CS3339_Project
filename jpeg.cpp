@@ -37,7 +37,7 @@ double dct8x8(const double in[8][8], double out[8][8])
             // Normalization coefficients: scale by 1/sqrt(2) for DC (0th) components
             double cu = (u == 0) ? (1.0 / std::sqrt(2.0)) : 1.0;
             double cv = (v == 0) ? (1.0 / std::sqrt(2.0)) : 1.0;
-            // Complete orthornormal transformation scaling
+            // Complete orthonormal transformation scaling
             out[u][v] = 0.25 * cu * cv * sum;
             checksum += out[u][v];
         }
