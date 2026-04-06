@@ -88,16 +88,22 @@ double worker_fft(int tid, int repeats, int n, int threads)
 
 double run_fft_once(int threads)
 {
-    const int n = 1 << 20;
-    const int repeats = 12;
+    const int n = 1 << 22; // Size of the input array (4 million complex numbers)
+    const int totalRepeats = 200; // Number of times to repeat the FFT computation for better timing accuracy
 
     std::vector<std::thread> pool;
     std::vector<double> partial(threads, 0.0);
 
+    const int baseRepeats = totalRepeats / threads;
+    const int extraRepeats = totalRepeats % threads;
+
     for (int i = 0; i < threads; ++i)
     {
-        pool.emplace_back([&, i]()
-                          { partial[i] = worker_fft(i, repeats, n, threads); });
+        int myRepeats = baseRepeats + (i < extraRepeats ? 1 : 0);
+        pool.emplace_back([&, i, myRepeats]()
+        {
+            partial[i] = worker_fft(i, myRepeats, n, threads);
+        });
     }
 
     for (auto &th : pool)
