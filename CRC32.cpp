@@ -39,23 +39,27 @@ uint32_t crc32_buf(const std::vector<uint8_t> &buf)
     return ~crc;
 }
 
-uint32_t worker_crc32(int tid, int blocks, int blockSize, int threads)
+uint32_t worker_crc32(int tid,
+                      int beginBlock,
+                      int endBlock,
+                      int blockSize,
+                      int threads)
 {
     if (threads == 1)
         pin_current_thread_to_core0();
 
-    std::mt19937 rng(12345 + tid * 17);
-    std::uniform_int_distribution<int> dist(0, 255);
-
-    std::vector<uint8_t> buf(blockSize);
     uint32_t final_crc = 0;
+    std::vector<uint8_t> buf(blockSize);
 
-    for (int b = 0; b < blocks; ++b)
+    for (int blockIdx = beginBlock; blockIdx < endBlock; ++blockIdx)
     {
+        // Generate pseudo-random data for the block using a thread-specific seed.
+        std::mt19937 rng(12345 + blockIdx * 17);
+        std::uniform_int_distribution<int> dist(0, 255);
+
         for (int i = 0; i < blockSize; ++i)
-        {
-            buf[i] = (uint8_t)dist(rng);
-        }
+            buf[i] = static_cast<uint8_t>(dist(rng));
+
         final_crc ^= crc32_buf(buf);
     }
 
@@ -64,16 +68,26 @@ uint32_t worker_crc32(int tid, int blocks, int blockSize, int threads)
 
 uint32_t run_crc32_once(int threads)
 {
-    const int blockSize = 512 * 1024 * 1024;
-    const int blocksPerThread = 12;
-
+    const int blockSize = 1024 * 1024 * 1024;
+    const int totalBlocks = 12;   // Total data size is 6 GB (12 blocks * 1 GB each)
     std::vector<std::thread> pool;
     std::vector<uint32_t> partial(threads, 0);
 
+    int base = totalBlocks / threads;
+    int extra = totalBlocks % threads;
+
+    int start = 0;
     for (int i = 0; i < threads; ++i)
     {
-        pool.emplace_back([&, i]()
-                          { partial[i] = worker_crc32(i, blocksPerThread, blockSize, threads); });
+        int cnt = base + (i < extra ? 1 : 0);
+        int beginBlock = start;
+        int endBlock = beginBlock + cnt;
+        start = endBlock;
+
+        pool.emplace_back([&, i, beginBlock, endBlock]()
+        {
+            partial[i] = worker_crc32(i, beginBlock, endBlock, blockSize, threads);
+        });
     }
 
     for (auto &th : pool)
