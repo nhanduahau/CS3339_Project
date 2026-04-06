@@ -83,7 +83,7 @@ double worker_jpeg(int tid, int blocks, int threads)
 
 double run_jpeg_once(int threads)
 {
-    const int totalBlocks = 50000000; // Total number of 8x8 blocks to process (50 million blocks = 3.2 billion pixels)
+    const int totalBlocks = 5000000; // Total number of 8x8 blocks to process (5 million blocks = 320 million pixels)
     std::vector<std::thread> pool;
     std::vector<double> partial(threads, 0.0);
 
