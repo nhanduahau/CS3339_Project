@@ -3,8 +3,6 @@
 ## Authors
 
 - Ly Huu Nhan To (Harry)
-- Jordan Hunt
-- Connor Dinh
 
 ## Work Distribution
 
