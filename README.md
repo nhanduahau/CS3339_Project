@@ -3,9 +3,12 @@
 ## Authors
 
 - Ly Huu Nhan To (Harry)
+- Jordan Hunt
+- Connor Dinh
 
 ## Work Distribution
 
+- Benchmark implementation (all code): Harry wrote the full benchmark codebase.
 - Benchmark execution and result collection: all three members (Harry, Jordan, Connor) ran machines and generated benchmark outputs together.
 - Proposal drafting: Jordan prepared the main proposal draft, and Connor handled proposal-side edits and support.
 - Data review and readability improvements: Connor re-checked the benchmark data, edited presentation for clarity, and provided preliminary conclusions before the final draft stage.
